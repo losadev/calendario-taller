@@ -5,7 +5,6 @@ import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { Dayjs } from "dayjs";
 
-// Mock de fechas disponibles
 const availableDates = ["2025-08-03", "2025-08-05", "2025-08-08", "2025-08-10"];
 const availableTimes: Record<string, string[]> = {
   "2025-08-03": ["10:00", "14:00", "16:00"],
@@ -30,9 +29,39 @@ export default function CalendarPicker() {
     ? availableTimes[selectedDate.format("YYYY-MM-DD")] || []
     : [];
 
+  const handleConfirm = async () => {
+    if (selectedDate && selectedTime) {
+      const formattedDate = selectedDate.format("YYYY-MM-DD");
+
+      try {
+        await fetch(
+          "https://n8n-n8n.zbifex.easypanel.host/webhook/7572a76b-ec60-41e8-b8d9-aa4f9b4b5d9d",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              date: formattedDate,
+              time: selectedTime,
+            }),
+          }
+        );
+        alert(
+          `Cita confirmada para el ${selectedDate.format(
+            "DD/MM/YYYY"
+          )} a las ${selectedTime}`
+        );
+      } catch (error) {
+        console.error("Error al enviar la cita:", error);
+        alert("Error al enviar la cita. Intenta de nuevo.");
+      }
+    } else {
+      alert("Por favor, selecciona una fecha y hora.");
+    }
+  };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <div className="max-w-md mx-auto p-6 bg-white rounded-xl shadow-lg space-y-6 min-h-screen">
+      <div className="max-w-md mx-auto p-6 bg-white rounded-xl space-y-6 min-h-screen">
         <Typography
           variant="h5"
           component="h2"
@@ -96,17 +125,7 @@ export default function CalendarPicker() {
 
         <button
           className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition-colors"
-          onClick={() => {
-            if (selectedDate && selectedTime) {
-              alert(
-                `Cita confirmada para el ${selectedDate.format(
-                  "DD/MM/YYYY"
-                )} a las ${selectedTime}`
-              );
-            } else {
-              alert("Por favor, selecciona una fecha y hora.");
-            }
-          }}
+          onClick={handleConfirm}
         >
           Confirmar Cita
         </button>
