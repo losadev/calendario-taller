@@ -3,7 +3,7 @@ import { Typography, MenuItem, Select } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs, { Dayjs } from "dayjs";
+import { Dayjs } from "dayjs";
 
 // Mock de fechas disponibles
 const availableDates = ["2025-08-03", "2025-08-05", "2025-08-08", "2025-08-10"];
