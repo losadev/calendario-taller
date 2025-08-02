@@ -124,7 +124,7 @@ export default function CalendarPicker() {
         )}
 
         <button
-          className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition-colors"
+          className="w-full bg-indigo-600 cursor-pointer text-white py-2 rounded-md hover:bg-indigo-700 transition-colors"
           onClick={handleConfirm}
         >
           Confirmar Cita
