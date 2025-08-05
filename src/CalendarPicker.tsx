@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Typography, MenuItem, Select } from "@mui/material";
+import { Typography, MenuItem, Select, Button } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -13,9 +13,16 @@ const availableTimes: Record<string, string[]> = {
   "2025-08-10": ["10:30", "12:30"],
 };
 
+function useQuery() {
+  return new URLSearchParams(window.location.search);
+}
+
 export default function CalendarPicker() {
   const [selectedDate, setSelectedDate] = useState<Dayjs | null>(null);
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const query = useQuery();
+  const subscriberId = query.get("subscriber_id");
 
   const isDateAvailable = (date: Dayjs) =>
     availableDates.includes(date.format("YYYY-MM-DD"));
@@ -30,21 +37,34 @@ export default function CalendarPicker() {
     : [];
 
   const handleConfirm = async () => {
+    if (!subscriberId) {
+      alert("No se encontró el subscriber_id en la URL.");
+      return;
+    }
+
     if (selectedDate && selectedTime) {
       const formattedDate = selectedDate.format("YYYY-MM-DD");
+      setLoading(true);
 
       try {
-        await fetch(
-          "https://n8n-n8n.zbifex.easypanel.host/webhook/7572a76b-ec60-41e8-b8d9-aa4f9b4b5d9d",
+        const response = await fetch(
+          "https://api.manychat.com/fb/subscriber/setCustomField",
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer 3149333:feb28f52cc42a1537718e93b3bc16000",
+            },
             body: JSON.stringify({
-              date: formattedDate,
-              time: selectedTime,
+              subscriber_id: subscriberId,
+              field_name: "cita", // Cambia por el nombre del campo que tengas en Manychat
+              field_value: `${formattedDate} ${selectedTime}`,
             }),
           }
         );
+
+        if (!response.ok) throw new Error("Error en la solicitud");
+
         alert(
           `Cita confirmada para el ${selectedDate.format(
             "DD/MM/YYYY"
@@ -53,6 +73,8 @@ export default function CalendarPicker() {
       } catch (error) {
         console.error("Error al enviar la cita:", error);
         alert("Error al enviar la cita. Intenta de nuevo.");
+      } finally {
+        setLoading(false);
       }
     } else {
       alert("Por favor, selecciona una fecha y hora.");
@@ -64,8 +86,7 @@ export default function CalendarPicker() {
       <div className="max-w-md mx-auto p-6 bg-white rounded-xl space-y-6 min-h-screen">
         <Typography
           variant="h5"
-          component="h2"
-          className="text-gray-800 font-semibold text-center"
+          className="text-center font-semibold text-gray-800"
         >
           Selecciona una fecha
         </Typography>
@@ -81,11 +102,7 @@ export default function CalendarPicker() {
 
         {selectedDate && (
           <>
-            <Typography
-              variant="h6"
-              component="h3"
-              className="text-gray-700 font-medium"
-            >
+            <Typography variant="h6" className="text-gray-700 font-medium">
               Selecciona una hora
             </Typography>
 
@@ -94,10 +111,8 @@ export default function CalendarPicker() {
                 value={selectedTime}
                 onChange={(e) => setSelectedTime(e.target.value)}
                 displayEmpty
-                className="w-full bg-gray-50 rounded-md border border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-                sx={{
-                  ".MuiSelect-select": { padding: "10px" },
-                }}
+                className="w-full bg-gray-50 rounded-md border border-gray-300"
+                sx={{ ".MuiSelect-select": { padding: "10px" } }}
               >
                 <MenuItem disabled value="">
                   <em>Elige una hora</em>
@@ -123,21 +138,26 @@ export default function CalendarPicker() {
           </div>
         )}
 
-        <button
-          className="w-full bg-indigo-600 cursor-pointer text-white py-2 rounded-md hover:bg-indigo-700 transition-colors"
+        <Button
+          fullWidth
+          variant="contained"
+          color="primary"
           onClick={handleConfirm}
+          disabled={loading}
         >
-          Confirmar Cita
-        </button>
-        <button
-          className="w-full bg-gray-300 text-gray-800 py-2 rounded-md hover:bg-gray-400 transition-colors"
+          {loading ? "Confirmando..." : "Confirmar Cita"}
+        </Button>
+
+        <Button
+          fullWidth
+          variant="outlined"
           onClick={() => {
             setSelectedDate(null);
             setSelectedTime("");
           }}
         >
           Limpiar Selección
-        </button>
+        </Button>
       </div>
     </LocalizationProvider>
   );
